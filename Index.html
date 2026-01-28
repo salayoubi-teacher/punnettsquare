@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. Alayoubi's Genetics Lab</title>
+    <style>
+        /* --- CSS Reset & Base Styles --- */
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        
+        /* --- Utilities --- */
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .items-end { align-items: flex-end; }
+        .gap-1 { gap: 0.25rem; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+        .gap-4 { gap: 1rem; }
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: 700; }
+        .uppercase { text-transform: uppercase; }
+        .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+        .rounded-lg { border-radius: 0.5rem; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .rounded-2xl { border-radius: 1rem; }
+        .rounded-full { border-radius: 9999px; }
+        .border { border-width: 1px; }
+        .bg-white { background-color: #ffffff; }
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+        .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+        .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+        .cursor-pointer { cursor: pointer; }
+        .flex-shrink-0 { flex-shrink: 0; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-5 { margin-bottom: 1.25rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mr-4 { margin-right: 1rem; } /* Added for result spacing */
+        
+        /* --- Colors --- */
+        .text-indigo-700 { color: #4338ca; }
+        .text-indigo-800 { color: #3730a3; }
+        .text-indigo-600 { color: #4f46e5; }
+        .text-slate-500 { color: #64748b; }
+        .text-slate-400 { color: #94a3b8; }
+        .text-pink-800 { color: #9d174d; }
+        .text-pink-600 { color: #db2777; }
+        .text-pink-700 { color: #be185d; }
+        .bg-slate-100 { background-color: #f1f5f9; }
+        .bg-slate-200 { background-color: #e2e8f0; }
+        .bg-indigo-50 { background-color: #eef2ff; }
+        .bg-indigo-100 { background-color: #e0e7ff; }
+        .bg-pink-50 { background-color: #fdf2f8; }
+        .bg-pink-100 { background-color: #fce7f3; }
+        .bg-red-50 { background-color: #fef2f2; }
+        .bg-red-100 { background-color: #fee2e2; }
+        .text-red-700 { color: #b91c1c; }
+        .border-slate-200 { border-color: #e2e8f0; }
+        .border-indigo-100 { border-color: #e0e7ff; }
+        .border-indigo-200 { border-color: #c7d2fe; }
+        .border-pink-100 { border-color: #fce7f3; }
+        .border-pink-200 { border-color: #fbcfe8; }
+
+        /* --- Buttons --- */
+        .btn { border: none; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        .btn:active { transform: scale(0.95); }
+        .btn-indigo { background-color: #4f46e5; color: white; }
+        .btn-indigo:hover { background-color: #4338ca; }
+        .btn-pink { background-color: #db2777; color: white; }
+        .btn-pink:hover { background-color: #be185d; }
+        .btn-green { background-color: #22c55e; color: white; }
+        .btn-green:hover { background-color: #16a34a; }
+        .btn-white { background-color: white; border: 2px solid #e2e8f0; color: #475569; }
+        .btn-white:hover { background-color: #f8fafc; }
+        .btn-selected-indigo { border: 2px solid #6366f1; background-color: #eef2ff; color: #4338ca; }
+        .btn-selected-pink { border: 2px solid #ec4899; background-color: #fdf2f8; color: #be185d; }
+        
+        /* Mode Switcher */
+        .mode-tab { padding: 0.5rem 1rem; font-weight: bold; border-radius: 0.5rem 0.5rem 0 0; cursor: pointer; border: 1px solid transparent; }
+        .mode-tab.active { background-color: white; border-color: #e2e8f0; border-bottom-color: white; color: #4338ca; }
+        .mode-tab.inactive { background-color: #f1f5f9; color: #94a3b8; }
+
+        /* --- Layout Grid --- */
+        .main-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 1024px) { .main-grid { grid-template-columns: 3fr 6fr 3fr; } }
+
+        /* --- Punnett Layout --- */
+        .punnett-container { display: grid; grid-template-columns: 128px 320px; grid-template-rows: 128px 320px; gap: 1rem; }
+        .grid-boxes { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0.75rem; background-color: #e2e8f0; padding: 0.75rem; border-radius: 0.75rem; width: 320px; height: 320px; }
+
+        /* --- Animations --- */
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .slow-move-x { transition: left 3s ease-in-out, right 3s ease-in-out, transform 3s ease-in-out, opacity 1s; }
+        .slow-move-y { transition: top 3s ease-in-out, bottom 3s ease-in-out, transform 3s ease-in-out, opacity 1s; }
+        .fly-in { transition: all 3s ease-in-out; }
+        .glow-pop { animation: glowPulse 1.5s ease-out infinite; }
+        .final-glow { animation: successPulse 1s ease-out forwards; }
+        @keyframes glowPulse { 0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); } 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); } }
+        @keyframes successPulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); } 50% { transform: scale(1.1); box-shadow: 0 0 20px 10px rgba(74, 222, 128, 0.4); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
+
+        /* --- Sup style for alleles --- */
+        sup { font-size: 0.6em; vertical-align: super; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="relative flex flex-col items-center justify-center mb-6">
+            <h1 class="text-3xl font-bold text-indigo-700 flex items-center gap-2">
+                Mr. Alayoubi's Genetics Lab
+            </h1>
+            <span class="text-xs font-bold text-slate-400 uppercase" style="letter-spacing: 0.1em; margin-top: 0.25rem;">Version 2.4</span>
+        </header>
+
+        <!-- Mode Switcher -->
+        <div class="flex justify-center mb-4 border-b border-slate-200" style="gap: 2px;">
+            <div id="tabPea" class="mode-tab active" onclick="switchMode('pea')">🌱 Pea Plant Traits</div>
+            <div id="tabBlood" class="mode-tab inactive" onclick="switchMode('blood')">🩸 Blood Types</div>
+        </div>
+
+        <div class="main-grid">
+            <!-- LEFT COLUMN: Controls -->
+            <div class="flex-col gap-4" style="display: flex;">
+                <!-- Trait Selection -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 relative" style="z-index: 20;">
+                    <label class="uppercase text-xs font-bold text-slate-500" style="display:block; margin-bottom:0.5rem; letter-spacing: 0.05em;">1. Select Trait</label>
+                    <select id="traitSelect" class="w-full p-2 bg-slate-100 border-none rounded-lg font-bold text-sm" style="color: #334155; outline: none;">
+                        <!-- Options filled by JS -->
+                    </select>
+                    <div id="traitLegend" class="bg-indigo-50 p-3 rounded-lg mt-3 border border-indigo-100">
+                        <!-- Legend filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Parents Selection -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 relative" style="z-index: 20;">
+                    <label class="uppercase text-xs font-bold text-slate-500" style="display:block; margin-bottom:0.75rem; letter-spacing: 0.05em;">2. Set Parents</label>
+                    
+                    <!-- Male Parent -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-bold text-slate-500 flex items-center gap-1" style="margin-top: 4px;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="14" r="5" /><path d="M13.5 10.5 L 20 4" /><path d="M16 4 h 4 v 4" /></svg>
+                                Male (Top)
+                            </span>
+                            <div class="flex flex-col items-end gap-1">
+                                <div class="flex items-center gap-2">
+                                    <div id="p1IconSmall"></div>
+                                    <span id="p1GenoDisplay" class="font-mono bg-slate-200 px-2 rounded text-indigo-700 font-bold text-xs"></span>
+                                </div>
+                                <span id="p1SetParentLabel" class="text-[10px] text-slate-500 font-bold uppercase"></span>
+                            </div>
+                        </div>
+                        <div id="p1Buttons">
+                            <!-- Buttons filled by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Female Parent -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-bold text-slate-500 flex items-center gap-1" style="margin-top: 4px;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="5" /><path d="M12 15 v 6" /><path d="M9 18 h 6" /></svg>
+                                Female (Side)
+                            </span>
+                            <div class="flex flex-col items-end gap-1">
+                                <div class="flex items-center gap-2">
+                                    <div id="p2IconSmall"></div>
+                                    <span id="p2GenoDisplay" class="font-mono bg-slate-200 px-2 rounded text-indigo-700 font-bold text-xs"></span>
+                                </div>
+                                <span id="p2SetParentLabel" class="text-[10px] text-slate-500 font-bold uppercase"></span>
+                            </div>
+                        </div>
+                        <div id="p2Buttons">
+                            <!-- Buttons filled by JS -->
+                        </div>
+                    </div>
+
+                    <button id="resetAllBtn" class="w-full btn btn-white rounded-lg py-2 text-xs font-bold flex items-center justify-center gap-2">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></svg>
+                        Reset Simulator
+                    </button>
+                </div>
+            </div>
+
+            <!-- MIDDLE COLUMN: Simulator -->
+            <div class="flex flex-col items-center">
+                <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200" style="overflow-x: auto; max-width: 100%;">
+                    <div style="min-width: 480px;">
+                        <div class="punnett-container mb-4">
+                            <!-- Top Left Empty -->
+                            <div class="relative w-32 h-32"></div>
+
+                            <!-- Parent 1 (Male/Top) Visual Area -->
+                            <div class="relative h-32 w-full bg-indigo-50 border border-indigo-100 rounded-xl" style="z-index: 10;">
+                                <div id="p1Controls" class="absolute top-4 w-full text-center transition-opacity" style="z-index: 60;">
+                                    <div class="flex items-center justify-center gap-1 mb-5 text-xs font-bold text-indigo-800 uppercase">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="14" r="5" /><path d="M13.5 10.5 L 20 4" /><path d="M16 4 h 4 v 4" /></svg>
+                                        MALE
+                                    </div>
+                                    <button id="btnSepP1" class="btn btn-indigo text-xs px-4 py-1 rounded-full font-bold shadow-sm">Separate</button>
+                                </div>
+                                <div id="p1PhenoVisual" class="absolute transition-opacity" style="left: 10px; top: 10px; z-index: 50;">
+                                    <div class="flex flex-col items-center gap-1">
+                                        <div class="flex items-center gap-1">
+                                            <div class="bg-white p-1 rounded-full shadow-sm border border-indigo-200" id="p1BigIcon"></div>
+                                            <svg width="24" height="24" class="text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="14" r="5" /><path d="M13.5 10.5 L 20 4" /><path d="M16 4 h 4 v 4" /></svg>
+                                        </div>
+                                        <span id="p1GenoDesc" class="text-xs font-bold text-indigo-700 bg-white/80 px-2 py-0.5 rounded shadow-sm" style="white-space: nowrap; font-size: 10px;"></span>
+                                    </div>
+                                </div>
+                                <!-- Gametes -->
+                                <div id="p1g1" class="absolute bottom-0 slow-move-x flex flex-col items-center" style="transform: translateX(-50%);">
+                                    <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-xl font-bold text-indigo-800 border-2 border-indigo-200 shadow-sm z-10" id="p1g1Text">A</div>
+                                    <span class="text-slate-400 uppercase font-bold transition-opacity delay-2000" id="p1g1Label" style="font-size: 9px; margin-top: 4px;">Sperm Cell</span>
+                                </div>
+                                <div id="p1g2" class="absolute bottom-0 slow-move-x flex flex-col items-center" style="transform: translateX(-50%);">
+                                    <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-xl font-bold text-indigo-800 border-2 border-indigo-200 shadow-sm z-10" id="p1g2Text">a</div>
+                                    <span class="text-slate-400 uppercase font-bold transition-opacity delay-2000" id="p1g2Label" style="font-size: 9px; margin-top: 4px;">Sperm Cell</span>
+                                </div>
+                            </div>
+
+                            <!-- Parent 2 (Female/Side) Visual Area -->
+                            <div class="relative w-32 h-full bg-pink-50 border border-pink-100 rounded-xl" style="z-index: 10;">
+                                <div id="p2Controls" class="absolute top-2 w-full text-center transition-opacity" style="z-index: 60;">
+                                    <div class="flex items-center justify-center gap-1 mb-1 text-xs font-bold text-pink-800 uppercase">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="5" /><path d="M12 15 v 6" /><path d="M9 18 h 6" /></svg>
+                                        FEMALE
+                                    </div>
+                                </div>
+                                <div id="p2PhenoVisual" class="absolute transition-opacity" style="top: -20px; left: 50%; transform: translate(-50%, -100%); z-index: 50;">
+                                    <div class="flex flex-col items-center gap-1">
+                                        <div class="flex items-center gap-1">
+                                            <div class="bg-white p-1 rounded-full shadow-sm border border-pink-200" id="p2BigIcon"></div>
+                                            <svg width="24" height="24" class="text-pink-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="5" /><path d="M12 15 v 6" /><path d="M9 18 h 6" /></svg>
+                                        </div>
+                                        <span id="p2GenoDesc" class="text-xs font-bold text-pink-700 bg-white px-2 py-0.5 rounded shadow-sm" style="white-space: nowrap; font-size: 10px;"></span>
+                                    </div>
+                                </div>
+                                <div id="p2SeparateBtnContainer" class="absolute w-full text-center transition-opacity" style="top: 50px; z-index: 70;">
+                                    <button id="btnSepP2" class="btn btn-pink text-xs px-4 py-1 rounded-full font-bold shadow-sm">Separate</button>
+                                </div>
+
+                                <!-- Gametes -->
+                                <div id="p2g1" class="absolute right-2 slow-move-y flex items-center justify-end gap-2" style="transform: translateY(-50%);">
+                                    <span class="text-slate-400 uppercase font-bold transition-opacity delay-2000" id="p2g1Label" style="font-size: 9px; white-space: nowrap;">Egg Cell</span>
+                                    <div class="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center text-xl font-bold text-pink-800 border-2 border-pink-200 shadow-sm z-10 flex-shrink-0" id="p2g1Text">A</div>
+                                </div>
+                                <div id="p2g2" class="absolute right-2 slow-move-y flex items-center justify-end gap-2" style="transform: translateY(-50%);">
+                                    <span class="text-slate-400 uppercase font-bold transition-opacity delay-2000" id="p2g2Label" style="font-size: 9px; white-space: nowrap;">Egg Cell</span>
+                                    <div class="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center text-xl font-bold text-pink-800 border-2 border-pink-200 shadow-sm z-10 flex-shrink-0" id="p2g2Text">a</div>
+                                </div>
+                            </div>
+
+                            <!-- The Grid -->
+                            <div class="grid-boxes relative" id="gridContainer" style="z-index: 0;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Results -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative h-full" style="z-index: 20;">
+                <h3 class="font-bold text-slate-500 mb-4 flex items-center gap-2 uppercase text-sm tracking-wider">
+                    <span class="block w-1 h-4 bg-indigo-500 rounded-full"></span>
+                    Results
+                </h3>
+                <div id="resultsPlaceholder" class="text-center text-slate-400 text-sm py-10 italic">
+                    Separate the parents and combine alleles to see results.
+                </div>
+                <div id="resultsContent" class="opacity-0 transition-opacity">
+                    <!-- Genotype -->
+                    <div class="mb-6">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Genotypic Ratio</h4>
+                        <div class="text-xs font-bold text-indigo-600 mb-3" id="genoRatioText">Ratio: 0 : 0 : 0</div>
+                        <div class="flex flex-col gap-3" id="genoBars"></div>
+                    </div>
+                    <!-- Phenotype -->
+                    <div class="pt-6 border-t border-slate-100">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Phenotypic Ratio</h4>
+                        <div class="text-xs font-bold text-indigo-600 mb-3" id="phenoRatioText">Ratio: 0 : 0</div>
+                        <div class="flex flex-col gap-4" id="phenoBars"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN LOGIC SCRIPT -->
+    <script>
+        // --- DATA ---
+        const PEA_TRAITS = [
+          { id: 'seedShape', name: 'Seed Shape', letter: 'R', dominant: 'Round', recessive: 'Wrinkled', domColor: '#F59E0B', recColor: '#D97706' },
+          { id: 'seedColor', name: 'Seed Color', letter: 'Y', dominant: 'Yellow', recessive: 'Green', domColor: '#FACC15', recColor: '#65A30D' },
+          { id: 'flowerColor', name: 'Flower Color', letter: 'P', dominant: 'Purple', recessive: 'White', domColor: '#9333EA', recColor: '#F3F4F6' },
+          { id: 'podShape', name: 'Pod Shape', letter: 'I', dominant: 'Inflated', recessive: 'Constricted', domColor: '#16A34A', recColor: '#16A34A' },
+          { id: 'podColor', name: 'Pod Color', letter: 'G', dominant: 'Green', recessive: 'Yellow', domColor: '#16A34A', recColor: '#FACC15' },
+          { id: 'flowerPosition', name: 'Flower Position', letter: 'A', dominant: 'Axial', recessive: 'Terminal', domColor: '#EC4899', recColor: '#EC4899' },
+          { id: 'stemHeight', name: 'Stem Height', letter: 'T', dominant: 'Tall', recessive: 'Short', domColor: '#15803D', recColor: '#15803D' }
+        ];
+
+        const PEA_PARENT_OPTS = [
+            { value: 'dom', label: 'Homozygous Dominant' },
+            { value: 'het', label: 'Heterozygous' },
+            { value: 'rec', label: 'Homozygous Recessive' }
+        ];
+
+        // Blood Types: A, B, O
+        // Alleles: A, B, O
+        // Genotypes: AA, AO, BB, BO, AB, OO
+        const BLOOD_DATA = {
+            id: 'bloodType',
+            name: 'ABO Blood Type',
+            genotypes: [
+                { id: 'AA', label: 'Type A (Homozygous)', alleles: ['A', 'A'], phenotype: 'Type A' },
+                { id: 'AO', label: 'Type A (Heterozygous)', alleles: ['A', 'O'], phenotype: 'Type A' },
+                { id: 'BB', label: 'Type B (Homozygous)', alleles: ['B', 'B'], phenotype: 'Type B' },
+                { id: 'BO', label: 'Type B (Heterozygous)', alleles: ['B', 'O'], phenotype: 'Type B' },
+                { id: 'AB', label: 'Type AB (Co-dominant)', alleles: ['A', 'B'], phenotype: 'Type AB' },
+                { id: 'OO', label: 'Type O (Recessive)', alleles: ['O', 'O'], phenotype: 'Type O' }
+            ]
+        };
+
+        // --- STATE ---
+        let state = {
+            mode: 'pea', // 'pea' | 'blood'
+            traitId: 'seedShape', // For pea mode
+            p1Value: 'het', // Pea: 'dom'/'het'/'rec' | Blood: 'AO'
+            p2Value: 'het',
+            p1Sep: false,
+            p2Sep: false,
+            boxes: ['empty', 'empty', 'empty', 'empty']
+        };
+
+        // --- DOM ELEMENTS ---
+        const elTraitSelect = document.getElementById('traitSelect');
+        const elP1Buttons = document.getElementById('p1Buttons');
+        const elP2Buttons = document.getElementById('p2Buttons');
+        const elResetBtn = document.getElementById('resetAllBtn');
+        const elTraitLegend = document.getElementById('traitLegend');
+
+        // --- INIT ---
+        function init() {
+            renderTraitSelect();
+            // Listeners
+            elTraitSelect.addEventListener('change', (e) => { 
+                state.traitId = e.target.value; 
+                resetSim(); 
+                render(); 
+            });
+            elResetBtn.addEventListener('click', () => { 
+                resetSim(); 
+                render(); 
+            });
+            document.getElementById('btnSepP1').addEventListener('click', () => { state.p1Sep = true; render(); });
+            document.getElementById('btnSepP2').addEventListener('click', () => { state.p2Sep = true; render(); });
+
+            render();
+        }
+
+        function switchMode(newMode) {
+            state.mode = newMode;
+            state.p1Sep = false; state.p2Sep = false; state.boxes = ['empty','empty','empty','empty'];
+            document.getElementById('tabPea').className = `mode-tab ${newMode === 'pea' ? 'active' : 'inactive'}`;
+            document.getElementById('tabBlood').className = `mode-tab ${newMode === 'blood' ? 'active' : 'inactive'}`;
+            
+            // Set defaults
+            if (newMode === 'pea') {
+                state.traitId = 'seedShape';
+                state.p1Value = 'het';
+                state.p2Value = 'het';
+            } else {
+                state.traitId = 'bloodType';
+                state.p1Value = 'AO';
+                state.p2Value = 'BO';
+            }
+            renderTraitSelect();
+            render();
+        }
+
+        function renderTraitSelect() {
+            elTraitSelect.innerHTML = '';
+            if (state.mode === 'pea') {
+                PEA_TRAITS.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.innerText = t.name;
+                    if(t.id === state.traitId) opt.selected = true;
+                    elTraitSelect.appendChild(opt);
+                });
+                elTraitSelect.disabled = false;
+            } else {
+                const opt = document.createElement('option');
+                opt.innerText = "ABO Blood Groups";
+                elTraitSelect.appendChild(opt);
+                elTraitSelect.disabled = true;
+            }
+        }
+
+        // --- HELPERS ---
+        function getPeaTrait() { return PEA_TRAITS.find(t => t.id === state.traitId); }
+        
+        function getGenotypePair(type, letter) {
+            if(type === 'dom') return letter + letter;
+            if(type === 'het') return letter + letter.toLowerCase();
+            if(type === 'rec') return letter.toLowerCase() + letter.toLowerCase();
+            return '';
+        }
+
+        // Display HTML for alleles
+        function getAlleleDisplay(allele) {
+            return allele; 
+        }
+
+        function getGenotypeInfo(typeValue, trait) {
+            if (state.mode === 'pea') {
+                let code = '';
+                if(typeValue === 'dom') code = trait.letter + trait.letter;
+                if(typeValue === 'het') code = trait.letter + trait.letter.toLowerCase();
+                if(typeValue === 'rec') code = trait.letter.toLowerCase() + trait.letter.toLowerCase();
+                
+                let desc = '';
+                if(typeValue === 'dom') desc = 'Homozygous Dominant';
+                if(typeValue === 'het') desc = 'Heterozygous';
+                if(typeValue === 'rec') desc = 'Homozygous Recessive';
+
+                return { 
+                    display: code, 
+                    alleles: code.split(''), 
+                    desc: desc,
+                    isDom: code.includes(trait.letter) // Phenotype check
+                };
+            } else {
+                // Blood
+                const geno = BLOOD_DATA.genotypes.find(g => g.id === typeValue);
+                const display = getAlleleDisplay(geno.alleles[0]) + getAlleleDisplay(geno.alleles[1]);
+                return {
+                    display: display,
+                    alleles: geno.alleles,
+                    desc: geno.label,
+                    phenotype: geno.phenotype
+                };
+            }
+        }
+
+        function getOffspringInfo(g1, g2, trait) {
+            if (state.mode === 'pea') {
+                let final = (g1 < g2) ? g1 + g2 : g2 + g1; // Tt vs tT
+                // Correction for case sorting: Tt
+                const l1 = g1; const l2 = g2;
+                if (l1 === l1.toLowerCase() && l2 === l2.toUpperCase()) final = l2 + l1;
+                
+                let desc = 'Heterozygous';
+                if(final[0] === final[1]) desc = (final[0] === trait.letter) ? 'Homozygous Dominant' : 'Homozygous Recessive';
+                
+                return {
+                    display: final,
+                    desc: desc,
+                    phenotype: final.includes(trait.letter) ? trait.dominant : trait.recessive,
+                    isDom: final.includes(trait.letter), // For Icon generation
+                    rawGeno: final // For counting
+                };
+            } else {
+                // Blood Logic
+                // Sort: A, B, O
+                const order = { 'A': 1, 'B': 2, 'O': 3 };
+                const alleles = [g1, g2].sort((a,b) => order[a] - order[b]);
+                const a1 = alleles[0];
+                const a2 = alleles[1];
+                const display = a1 + a2; // e.g., AA, AO, AB
+                
+                // Determine Phenotype
+                let pheno = 'Type O';
+                if (a1 === 'A' && a2 === 'A') pheno = 'Type A';
+                if (a1 === 'A' && a2 === 'O') pheno = 'Type A';
+                if (a1 === 'B' && a2 === 'B') pheno = 'Type B';
+                if (a1 === 'B' && a2 === 'O') pheno = 'Type B';
+                if (a1 === 'A' && a2 === 'B') pheno = 'Type AB';
+                
+                // Determine Desc (Homo/Hetero)
+                let desc = '';
+                if(a1 === a2) desc = (a1 === 'O') ? 'Homozygous Recessive' : 'Homozygous Dominant';
+                else if (a1 === 'A' && a2 === 'B') desc = 'Co-dominant';
+                else desc = 'Heterozygous';
+
+                return {
+                    display: display,
+                    desc: desc,
+                    phenotype: pheno,
+                    rawGeno: display // internal key
+                };
+            }
+        }
+
+        function resetSim() {
+            state.p1Sep = false; state.p2Sep = false; state.boxes = ['empty', 'empty', 'empty', 'empty'];
+        }
+
+        // --- SVG GENERATOR ---
+        function getIconSVG(traitId, variant, size=64) {
+            // Variant: for Pea it's boolean (isDom), for Blood it's string ('Type A', etc)
+            const svgStart = `<svg width="${size}" height="${size}" viewBox="0 0 100 100">`;
+            const svgEnd = `</svg>`;
+            
+            if (state.mode === 'pea') {
+                const t = PEA_TRAITS.find(x => x.id === traitId);
+                const color = variant ? t.domColor : t.recColor; // variant is isDom
+                const stroke = '#374151';
+                
+                let content = '';
+                // Simple shapes for peas (reusing logic)
+                if (traitId === 'seedShape') content = variant ? `<circle cx="50" cy="50" r="40" fill="${color}" stroke="${stroke}" stroke-width="3" />` : `<path d="M50 10 C 60 10 70 15 80 20 C 90 30, 90 50, 85 65 C 80 80, 60 90, 50 90 C 40 90, 20 80, 15 65 C 10 50, 10 30, 20 20 C 30 15, 40 10, 50 10 Z" fill="${color}" stroke="${stroke}" stroke-width="3" /><path d="M30 30 Q 50 50 70 30" fill="none" stroke="${stroke}" stroke-width="2" opacity="0.5" /><path d="M30 70 Q 50 50 70 70" fill="none" stroke="${stroke}" stroke-width="2" opacity="0.5" />`;
+                else if (traitId === 'seedColor') content = `<circle cx="50" cy="50" r="40" fill="${color}" stroke="${stroke}" stroke-width="3" />`;
+                else if (traitId === 'flowerColor') content = `<path d="M50 50 L30 20 Q50 0 70 20 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L80 30 Q100 50 80 70 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L70 80 Q50 100 30 80 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L20 70 Q0 50 20 30 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><circle cx="50" cy="50" r="10" fill="#FDE047" />`;
+                else content = `<circle cx="50" cy="50" r="40" fill="${color}" stroke="${stroke}" stroke-width="3" />`; // Fallback
+                
+                return svgStart + content + svgEnd;
+            } else {
+                // Blood Mode
+                const pheno = variant; // 'Type A', 'Type B', 'Type AB', 'Type O'
+                const color = '#ef4444'; // Blood Red
+                const stroke = '#991b1b';
+                let content = `<circle cx="50" cy="50" r="35" fill="${color}" stroke="${stroke}" stroke-width="3" />`;
+                
+                // Add Antigens
+                if (pheno === 'Type A' || pheno === 'Type AB') {
+                    // Spikes
+                    content += `<path d="M50 15 L45 5 L55 5 Z" fill="#3b82f6" /> <path d="M85 50 L95 45 L95 55 Z" fill="#3b82f6" /> <path d="M15 50 L5 45 L5 55 Z" fill="#3b82f6" /> <path d="M50 85 L45 95 L55 95 Z" fill="#3b82f6" />`;
+                    // Diagonals
+                    content += `<path d="M75 25 L82 18 L88 24 Z" fill="#3b82f6" /> <path d="M25 75 L18 82 L24 88 Z" fill="#3b82f6" />`;
+                }
+                if (pheno === 'Type B' || pheno === 'Type AB') {
+                    // Bumps (Yellow Circles)
+                    content += `<circle cx="25" cy="25" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="75" cy="75" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="75" cy="25" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="25" cy="75" r="5" fill="#facc15" stroke="black" stroke-width="1"/>`;
+                    if (pheno === 'Type B') { // Add cardinals for pure B
+                         content += `<circle cx="50" cy="10" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="90" cy="50" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="50" cy="90" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="10" cy="50" r="5" fill="#facc15" stroke="black" stroke-width="1"/>`;
+                    }
+                }
+                return svgStart + content + svgEnd;
+            }
+        }
+
+        // --- RENDER ---
+        function render() {
+            const trait = state.mode === 'pea' ? getPeaTrait() : null;
+            const p1Info = getGenotypeInfo(state.p1Value, trait);
+            const p2Info = getGenotypeInfo(state.p2Value, trait);
+            
+            // 1. Legend
+            if (state.mode === 'pea') {
+                document.getElementById('traitLegend').innerHTML = `
+                    <div class="flex items-center gap-2 text-xs font-bold" style="color: #3730a3; margin-bottom: 0.5rem;">
+                        <div>${getIconSVG(trait.id, true, 24)}</div>
+                        <span>Dom: ${trait.dominant} (${trait.letter})</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-bold" style="color: #3730a3;">
+                        <div>${getIconSVG(trait.id, false, 24)}</div>
+                        <span>Rec: ${trait.recessive} (${trait.letter.toLowerCase()})</span>
+                    </div>`;
+            } else {
+                document.getElementById('traitLegend').innerHTML = `
+                    <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-600">
+                        <div class="flex items-center gap-1">${getIconSVG('blood', 'Type A', 20)} Type A</div>
+                        <div class="flex items-center gap-1">${getIconSVG('blood', 'Type B', 20)} Type B</div>
+                        <div class="flex items-center gap-1">${getIconSVG('blood', 'Type AB', 20)} Type AB</div>
+                        <div class="flex items-center gap-1">${getIconSVG('blood', 'Type O', 20)} Type O</div>
+                    </div>
+                `;
+            }
+
+            // 2. Parent Controls
+            // Icon
+            const p1VisualVariant = state.mode === 'pea' ? p1Info.isDom : p1Info.phenotype;
+            const p2VisualVariant = state.mode === 'pea' ? p2Info.isDom : p2Info.phenotype;
+            
+            document.getElementById('p1IconSmall').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : 'blood', p1VisualVariant, 24);
+            document.getElementById('p1GenoDisplay').innerHTML = p1Info.display;
+            document.getElementById('p1SetParentLabel').innerText = p1Info.desc;
+
+            document.getElementById('p2IconSmall').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : 'blood', p2VisualVariant, 24);
+            document.getElementById('p2GenoDisplay').innerHTML = p2Info.display;
+            document.getElementById('p2SetParentLabel').innerText = p2Info.desc;
+
+            // Buttons
+            renderParentButtons(elP1Buttons, 'p1Value');
+            renderParentButtons(elP2Buttons, 'p2Value');
+
+            // 3. Simulator Visuals
+            // P1
+            document.getElementById('p1Controls').style.opacity = state.p1Sep ? '0' : '1';
+            document.getElementById('p1Controls').style.pointerEvents = state.p1Sep ? 'none' : 'auto';
+            document.getElementById('p1BigIcon').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : 'blood', p1VisualVariant, 48);
+            document.getElementById('p1GenoDesc').innerText = p1Info.desc;
+            
+            document.getElementById('p1g1Text').innerHTML = getAlleleDisplay(p1Info.alleles[0]);
+            document.getElementById('p1g2Text').innerHTML = getAlleleDisplay(p1Info.alleles[1]);
+            
+            document.getElementById('p1g1').style.left = state.p1Sep ? "25%" : "calc(50% - 32px)";
+            document.getElementById('p1g2').style.left = state.p1Sep ? "75%" : "calc(50% + 32px)";
+            document.getElementById('p1g1Label').style.opacity = state.p1Sep ? '1' : '0';
+            document.getElementById('p1g2Label').style.opacity = state.p1Sep ? '1' : '0';
+
+            // P2
+            document.getElementById('p2Controls').style.opacity = state.p2Sep ? '0' : '1';
+            document.getElementById('p2SeparateBtnContainer').style.opacity = state.p2Sep ? '0' : '1';
+            document.getElementById('p2SeparateBtnContainer').style.pointerEvents = state.p2Sep ? 'none' : 'auto';
+            document.getElementById('p2BigIcon').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : 'blood', p2VisualVariant, 48);
+            document.getElementById('p2GenoDesc').innerText = p2Info.desc;
+
+            document.getElementById('p2g1Text').innerHTML = getAlleleDisplay(p2Info.alleles[0]);
+            document.getElementById('p2g2Text').innerHTML = getAlleleDisplay(p2Info.alleles[1]);
+
+            document.getElementById('p2g1').style.top = state.p2Sep ? "25%" : "calc(50% - 32px)";
+            document.getElementById('p2g2').style.top = state.p2Sep ? "75%" : "calc(50% + 32px)";
+            document.getElementById('p2g1Label').style.opacity = state.p2Sep ? '1' : '0';
+            document.getElementById('p2g2Label').style.opacity = state.p2Sep ? '1' : '0';
+
+            // Grid
+            renderGrid(p1Info.alleles, p2Info.alleles, trait);
+            renderStats(p1Info.alleles, p2Info.alleles, trait);
+        }
+
+        function renderParentButtons(container, stateKey) {
+            container.innerHTML = '';
+            
+            if (state.mode === 'pea') {
+                const trait = getPeaTrait();
+                container.className = "flex gap-1";
+                PEA_PARENT_OPTS.forEach(opt => {
+                    const btn = document.createElement('button');
+                    const code = getGenotypePair(opt.value, trait.letter);
+                    const isSelected = state[stateKey] === opt.value;
+                    btn.className = `flex-1 py-2 rounded-lg font-bold text-xs ${isSelected ? (stateKey==='p1Value'?'btn-selected-indigo':'btn-selected-pink') : 'bg-slate-100 text-slate-500 border border-transparent'}`;
+                    btn.innerHTML = code;
+                    btn.onclick = () => { state[stateKey] = opt.value; resetSim(); render(); };
+                    container.appendChild(btn);
+                });
+            } else {
+                container.className = "grid grid-cols-3 gap-1";
+                BLOOD_DATA.genotypes.forEach(g => {
+                    const btn = document.createElement('button');
+                    const isSelected = state[stateKey] === g.id;
+                    btn.className = `py-2 rounded-lg font-bold text-[10px] ${isSelected ? (stateKey==='p1Value'?'btn-selected-indigo':'btn-selected-pink') : 'bg-slate-100 text-slate-500 border border-transparent'}`;
+                    const d1 = getAlleleDisplay(g.alleles[0]);
+                    const d2 = getAlleleDisplay(g.alleles[1]);
+                    btn.innerHTML = d1 + d2;
+                    btn.onclick = () => { state[stateKey] = g.id; resetSim(); render(); };
+                    container.appendChild(btn);
+                });
+            }
+        }
+
+        function renderGrid(p1, p2, trait) {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+            
+            const offspringMap = [
+                { g1: p1[0], g2: p2[0] }, { g1: p1[1], g2: p2[0] },
+                { g1: p1[0], g2: p2[1] }, { g1: p1[1], g2: p2[1] }
+            ];
+
+            offspringMap.forEach((genes, idx) => {
+                const boxState = state.boxes[idx];
+                const info = getOffspringInfo(genes.g1, genes.g2, trait);
+                
+                const box = document.createElement('div');
+                box.className = `bg-white rounded-lg flex flex-col items-center justify-center relative overflow-hidden shadow-sm transition-all ${boxState === 'filled' ? 'border-2 border-indigo-100' : ''}`;
+                
+                if (boxState === 'empty' && state.p1Sep && state.p2Sep) {
+                    const btn = document.createElement('button');
+                    btn.className = "absolute inset-0 m-auto w-24 h-8 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-full shadow-lg flex items-center justify-center gap-1 glow-pop z-20 btn";
+                    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6" /><path d="M20 10h-6V4" /><path d="M14 10l7-7" /><path d="M3 21l7-7" /></svg> COMBINE`;
+                    btn.onclick = () => combine(idx);
+                    box.appendChild(btn);
+                } else if (boxState === 'animating') {
+                    // Flying alleles
+                    const flyer1 = document.createElement('div');
+                    flyer1.className = "absolute z-10 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-xl font-bold text-indigo-800 border-2 border-indigo-200 shadow fly-in";
+                    flyer1.innerHTML = getAlleleDisplay(genes.g1);
+                    flyer1.style.top = '-150px'; flyer1.style.left = '50%'; flyer1.style.transform = 'translateX(-50%)';
+                    
+                    const flyer2 = document.createElement('div');
+                    flyer2.className = "absolute z-10 w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-xl font-bold text-pink-800 border-2 border-pink-200 shadow fly-in";
+                    flyer2.innerHTML = getAlleleDisplay(genes.g2);
+                    flyer2.style.left = '-150px'; flyer2.style.top = '50%'; flyer2.style.transform = 'translateY(-50%)';
+
+                    box.appendChild(flyer1); box.appendChild(flyer2);
+                    setTimeout(() => {
+                        flyer1.style.top = '50%'; flyer1.style.transform = 'translate(-50%, -50%)';
+                        flyer2.style.left = '50%'; flyer2.style.transform = 'translate(-50%, -50%)';
+                    }, 50);
+                } else if (boxState === 'filled') {
+                    const iconVariant = state.mode === 'pea' ? info.isDom : info.phenotype;
+                    
+                    const content = document.createElement('div');
+                    content.className = "flex flex-col items-center justify-center w-full h-full fade-in final-glow pt-2";
+                    content.innerHTML = `
+                        <div class="mb-1" style="transform: scale(0.75);">
+                            ${getIconSVG(state.mode === 'pea' ? trait.id : 'blood', iconVariant, 50)}
+                        </div>
+                        <span class="text-2xl font-black text-slate-800 tracking-wider leading-none">${info.display}</span>
+                        <span class="text-slate-500 uppercase text-center w-full px-1" style="font-size: 9px; font-weight: 700;">${info.desc}</span>
+                        <div class="mt-1 uppercase font-bold text-indigo-500" style="font-size: 10px;">${info.phenotype}</div>
+                    `;
+                    box.appendChild(content);
+                }
+                container.appendChild(box);
+            });
+        }
+
+        function combine(idx) {
+            state.boxes[idx] = 'animating';
+            render();
+            setTimeout(() => { state.boxes[idx] = 'filled'; render(); }, 3000);
+        }
+
+        function renderStats(p1, p2, trait) {
+            const filledCount = state.boxes.filter(b => b === 'filled').length;
+            const container = document.getElementById('resultsContent');
+            const placeholder = document.getElementById('resultsPlaceholder');
+
+            if (filledCount === 0) {
+                container.style.opacity = '0'; placeholder.style.display = 'block'; return;
+            }
+            container.style.opacity = '1'; placeholder.style.display = 'none';
+
+            let genoCounts = {};
+            let phenoCounts = {};
+
+            const offspringMap = [{ g1: p1[0], g2: p2[0] }, { g1: p1[1], g2: p2[0] }, { g1: p1[0], g2: p2[1] }, { g1: p1[1], g2: p2[1] }];
+
+            state.boxes.forEach((status, idx) => {
+                if(status === 'filled') {
+                    const info = getOffspringInfo(offspringMap[idx].g1, offspringMap[idx].g2, trait);
+                    
+                    // Genotype Count
+                    if(!genoCounts[info.display]) genoCounts[info.display] = { count:0, desc: info.desc };
+                    genoCounts[info.display].count++;
+
+                    // Phenotype Count
+                    if(!phenoCounts[info.phenotype]) phenoCounts[info.phenotype] = 0;
+                    phenoCounts[info.phenotype]++;
+                }
+            });
+
+            // Genotypic Bars
+            const elGenoBars = document.getElementById('genoBars');
+            elGenoBars.innerHTML = '';
+            Object.keys(genoCounts).sort().forEach(gKey => {
+                const data = genoCounts[gKey];
+                const pct = (data.count / filledCount) * 100;
+                const wrap = document.createElement('div');
+                wrap.innerHTML = `
+                    <div class="flex justify-between text-sm mb-1 font-medium items-end">
+                        <div class="flex flex-col mr-4">
+                            <span class="font-mono text-slate-800 font-bold">${gKey}</span>
+                            <span class="text-slate-400 uppercase" style="font-size: 9px;">${data.desc}</span>
+                        </div>
+                        <span class="text-slate-500 text-xs">${Math.round(pct)}%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mt-1">
+                        <div class="bg-blue-500 h-2.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                    </div>`;
+                elGenoBars.appendChild(wrap);
+            });
+            document.getElementById('genoRatioText').innerText = `Ratio: ` + Object.values(genoCounts).map(v => v.count).join(' : ');
+
+            // Phenotypic Bars
+            const elPhenoBars = document.getElementById('phenoBars');
+            elPhenoBars.innerHTML = '';
+            Object.keys(phenoCounts).sort().forEach(pKey => {
+                const count = phenoCounts[pKey];
+                const pct = (count / filledCount) * 100;
+                const wrap = document.createElement('div');
+                
+                // Get Icon Variant
+                let iconVariant = pKey; // for blood
+                if(state.mode === 'pea') iconVariant = (pKey === trait.dominant); // true/false
+
+                wrap.className = "flex items-center gap-3";
+                wrap.innerHTML = `
+                    <div class="p-1 bg-slate-100 rounded">
+                        ${getIconSVG(state.mode === 'pea' ? trait.id : 'blood', iconVariant, 24)}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between text-sm font-medium">
+                            <span class="text-slate-700 mr-4">${pKey}</span>
+                            <span>${Math.round(pct)}%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1">
+                            <div class="bg-green-500 h-1.5 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>`;
+                elPhenoBars.appendChild(wrap);
+            });
+            document.getElementById('phenoRatioText').innerText = `Ratio: ` + Object.entries(phenoCounts).map(([k,v]) => `${v} (${k})`).join(' : ');
+        }
+
+        // Run
+        init();
+
+    </script>
+</body>
+</html>
