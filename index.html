@@ -49,7 +49,7 @@
         .mb-4 { margin-bottom: 1rem; }
         .mb-5 { margin-bottom: 1.25rem; }
         .mb-6 { margin-bottom: 1.5rem; }
-        .mr-4 { margin-right: 1rem; } /* Added for result spacing */
+        .mr-4 { margin-right: 1rem; } 
         
         /* --- Colors --- */
         .text-indigo-700 { color: #4338ca; }
@@ -125,12 +125,13 @@
             <h1 class="text-3xl font-bold text-indigo-700 flex items-center gap-2">
                 Mr. Alayoubi's Genetics Lab
             </h1>
-            <span class="text-xs font-bold text-slate-400 uppercase" style="letter-spacing: 0.1em; margin-top: 0.25rem;">Version 2.4</span>
+            <span class="text-xs font-bold text-slate-400 uppercase" style="letter-spacing: 0.1em; margin-top: 0.25rem;">Version 2.5</span>
         </header>
 
         <!-- Mode Switcher -->
         <div class="flex justify-center mb-4 border-b border-slate-200" style="gap: 2px;">
             <div id="tabPea" class="mode-tab active" onclick="switchMode('pea')">🌱 Pea Plant Traits</div>
+            <div id="tabSnap" class="mode-tab inactive" onclick="switchMode('snapdragon')">🌸 Incomplete Dominance</div>
             <div id="tabBlood" class="mode-tab inactive" onclick="switchMode('blood')">🩸 Blood Types</div>
         </div>
 
@@ -339,7 +340,7 @@
 
         // --- STATE ---
         let state = {
-            mode: 'pea', // 'pea' | 'blood'
+            mode: 'pea', // 'pea' | 'snapdragon' | 'blood'
             traitId: 'seedShape', // For pea mode
             p1Value: 'het', // Pea: 'dom'/'het'/'rec' | Blood: 'AO'
             p2Value: 'het',
@@ -378,6 +379,7 @@
             state.mode = newMode;
             state.p1Sep = false; state.p2Sep = false; state.boxes = ['empty','empty','empty','empty'];
             document.getElementById('tabPea').className = `mode-tab ${newMode === 'pea' ? 'active' : 'inactive'}`;
+            document.getElementById('tabSnap').className = `mode-tab ${newMode === 'snapdragon' ? 'active' : 'inactive'}`;
             document.getElementById('tabBlood').className = `mode-tab ${newMode === 'blood' ? 'active' : 'inactive'}`;
             
             // Set defaults
@@ -385,6 +387,10 @@
                 state.traitId = 'seedShape';
                 state.p1Value = 'het';
                 state.p2Value = 'het';
+            } else if (newMode === 'snapdragon') {
+                state.traitId = 'snapColor';
+                state.p1Value = 'het'; // RW
+                state.p2Value = 'het'; // RW
             } else {
                 state.traitId = 'bloodType';
                 state.p1Value = 'AO';
@@ -405,6 +411,11 @@
                     elTraitSelect.appendChild(opt);
                 });
                 elTraitSelect.disabled = false;
+            } else if (state.mode === 'snapdragon') {
+                const opt = document.createElement('option');
+                opt.innerText = "Snapdragon Flower Color";
+                elTraitSelect.appendChild(opt);
+                elTraitSelect.disabled = true;
             } else {
                 const opt = document.createElement('option');
                 opt.innerText = "ABO Blood Groups";
@@ -417,6 +428,12 @@
         function getPeaTrait() { return PEA_TRAITS.find(t => t.id === state.traitId); }
         
         function getGenotypePair(type, letter) {
+            if (state.mode === 'snapdragon') {
+                if(type === 'dom') return 'RR';
+                if(type === 'het') return 'RW';
+                if(type === 'rec') return 'WW';
+            }
+            // Pea
             if(type === 'dom') return letter + letter;
             if(type === 'het') return letter + letter.toLowerCase();
             if(type === 'rec') return letter.toLowerCase() + letter.toLowerCase();
@@ -446,6 +463,20 @@
                     desc: desc,
                     isDom: code.includes(trait.letter) // Phenotype check
                 };
+            } else if (state.mode === 'snapdragon') {
+                let code = '';
+                let desc = '';
+                let pheno = '';
+                if(typeValue === 'dom') { code = 'RR'; desc = 'Homozygous (Red)'; pheno = 'Red'; }
+                if(typeValue === 'het') { code = 'RW'; desc = 'Heterozygous (Pink)'; pheno = 'Pink'; }
+                if(typeValue === 'rec') { code = 'WW'; desc = 'Homozygous (White)'; pheno = 'White'; }
+                
+                return {
+                    display: code,
+                    alleles: code.split(''),
+                    desc: desc,
+                    phenotype: pheno // For icon
+                };
             } else {
                 // Blood
                 const geno = BLOOD_DATA.genotypes.find(g => g.id === typeValue);
@@ -462,7 +493,6 @@
         function getOffspringInfo(g1, g2, trait) {
             if (state.mode === 'pea') {
                 let final = (g1 < g2) ? g1 + g2 : g2 + g1; // Tt vs tT
-                // Correction for case sorting: Tt
                 const l1 = g1; const l2 = g2;
                 if (l1 === l1.toLowerCase() && l2 === l2.toUpperCase()) final = l2 + l1;
                 
@@ -475,6 +505,21 @@
                     phenotype: final.includes(trait.letter) ? trait.dominant : trait.recessive,
                     isDom: final.includes(trait.letter), // For Icon generation
                     rawGeno: final // For counting
+                };
+            } else if (state.mode === 'snapdragon') {
+                // R and W
+                const alleles = [g1, g2].sort();
+                const display = alleles.join('');
+                let desc = '';
+                let pheno = '';
+                if(display === 'RR') { desc = 'Homozygous'; pheno = 'Red'; }
+                else if(display === 'WW') { desc = 'Homozygous'; pheno = 'White'; }
+                else { desc = 'Heterozygous'; pheno = 'Pink'; }
+                return {
+                    display: display,
+                    desc: desc,
+                    phenotype: pheno,
+                    rawGeno: display
                 };
             } else {
                 // Blood Logic
@@ -514,7 +559,7 @@
 
         // --- SVG GENERATOR ---
         function getIconSVG(traitId, variant, size=64) {
-            // Variant: for Pea it's boolean (isDom), for Blood it's string ('Type A', etc)
+            // Variant: for Pea it's boolean (isDom), for Blood/Snap it's string phenotype
             const svgStart = `<svg width="${size}" height="${size}" viewBox="0 0 100 100">`;
             const svgEnd = `</svg>`;
             
@@ -530,6 +575,16 @@
                 else if (traitId === 'flowerColor') content = `<path d="M50 50 L30 20 Q50 0 70 20 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L80 30 Q100 50 80 70 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L70 80 Q50 100 30 80 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L20 70 Q0 50 20 30 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><circle cx="50" cy="50" r="10" fill="#FDE047" />`;
                 else content = `<circle cx="50" cy="50" r="40" fill="${color}" stroke="${stroke}" stroke-width="3" />`; // Fallback
                 
+                return svgStart + content + svgEnd;
+            } else if (state.mode === 'snapdragon') {
+                // variant is 'Red', 'Pink', 'White'
+                let color = '#ef4444'; // Red default
+                if(variant === 'Pink') color = '#f472b6';
+                if(variant === 'White') color = '#f8fafc';
+                const stroke = '#374151';
+                
+                // Flower Shape
+                let content = `<path d="M50 50 L30 20 Q50 0 70 20 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L80 30 Q100 50 80 70 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L70 80 Q50 100 30 80 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L20 70 Q0 50 20 30 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><circle cx="50" cy="50" r="10" fill="#FDE047" />`;
                 return svgStart + content + svgEnd;
             } else {
                 // Blood Mode
@@ -573,6 +628,15 @@
                         <div>${getIconSVG(trait.id, false, 24)}</div>
                         <span>Rec: ${trait.recessive} (${trait.letter.toLowerCase()})</span>
                     </div>`;
+            } else if (state.mode === 'snapdragon') {
+                document.getElementById('traitLegend').innerHTML = `
+                    <div class="flex items-center gap-2 text-xs font-bold" style="color: #3730a3;">
+                        <div class="flex gap-2">
+                            <span>${getIconSVG('snapColor', 'Red', 20)} RR</span>
+                            <span>${getIconSVG('snapColor', 'Pink', 20)} RW</span>
+                            <span>${getIconSVG('snapColor', 'White', 20)} WW</span>
+                        </div>
+                    </div>`;
             } else {
                 document.getElementById('traitLegend').innerHTML = `
                     <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-600">
@@ -586,14 +650,18 @@
 
             // 2. Parent Controls
             // Icon
-            const p1VisualVariant = state.mode === 'pea' ? p1Info.isDom : p1Info.phenotype;
-            const p2VisualVariant = state.mode === 'pea' ? p2Info.isDom : p2Info.phenotype;
+            let p1VisualVariant, p2VisualVariant;
+            if(state.mode === 'pea') {
+                p1VisualVariant = p1Info.isDom; p2VisualVariant = p2Info.isDom;
+            } else {
+                p1VisualVariant = p1Info.phenotype; p2VisualVariant = p2Info.phenotype;
+            }
             
-            document.getElementById('p1IconSmall').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : 'blood', p1VisualVariant, 24);
+            document.getElementById('p1IconSmall').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), p1VisualVariant, 24);
             document.getElementById('p1GenoDisplay').innerHTML = p1Info.display;
             document.getElementById('p1SetParentLabel').innerText = p1Info.desc;
 
-            document.getElementById('p2IconSmall').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : 'blood', p2VisualVariant, 24);
+            document.getElementById('p2IconSmall').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), p2VisualVariant, 24);
             document.getElementById('p2GenoDisplay').innerHTML = p2Info.display;
             document.getElementById('p2SetParentLabel').innerText = p2Info.desc;
 
@@ -605,7 +673,7 @@
             // P1
             document.getElementById('p1Controls').style.opacity = state.p1Sep ? '0' : '1';
             document.getElementById('p1Controls').style.pointerEvents = state.p1Sep ? 'none' : 'auto';
-            document.getElementById('p1BigIcon').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : 'blood', p1VisualVariant, 48);
+            document.getElementById('p1BigIcon').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), p1VisualVariant, 48);
             document.getElementById('p1GenoDesc').innerText = p1Info.desc;
             
             document.getElementById('p1g1Text').innerHTML = getAlleleDisplay(p1Info.alleles[0]);
@@ -620,7 +688,7 @@
             document.getElementById('p2Controls').style.opacity = state.p2Sep ? '0' : '1';
             document.getElementById('p2SeparateBtnContainer').style.opacity = state.p2Sep ? '0' : '1';
             document.getElementById('p2SeparateBtnContainer').style.pointerEvents = state.p2Sep ? 'none' : 'auto';
-            document.getElementById('p2BigIcon').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : 'blood', p2VisualVariant, 48);
+            document.getElementById('p2BigIcon').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), p2VisualVariant, 48);
             document.getElementById('p2GenoDesc').innerText = p2Info.desc;
 
             document.getElementById('p2g1Text').innerHTML = getAlleleDisplay(p2Info.alleles[0]);
@@ -639,8 +707,8 @@
         function renderParentButtons(container, stateKey) {
             container.innerHTML = '';
             
-            if (state.mode === 'pea') {
-                const trait = getPeaTrait();
+            if (state.mode === 'pea' || state.mode === 'snapdragon') {
+                const trait = state.mode === 'pea' ? getPeaTrait() : { letter: 'R' }; // Dummy for snap
                 container.className = "flex gap-1";
                 PEA_PARENT_OPTS.forEach(opt => {
                     const btn = document.createElement('button');
@@ -706,13 +774,15 @@
                         flyer2.style.left = '50%'; flyer2.style.transform = 'translate(-50%, -50%)';
                     }, 50);
                 } else if (boxState === 'filled') {
-                    const iconVariant = state.mode === 'pea' ? info.isDom : info.phenotype;
+                    let iconVariant;
+                    if(state.mode === 'pea') iconVariant = info.isDom;
+                    else iconVariant = info.phenotype; // Blood or Snap
                     
                     const content = document.createElement('div');
                     content.className = "flex flex-col items-center justify-center w-full h-full fade-in final-glow pt-2";
                     content.innerHTML = `
                         <div class="mb-1" style="transform: scale(0.75);">
-                            ${getIconSVG(state.mode === 'pea' ? trait.id : 'blood', iconVariant, 50)}
+                            ${getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), iconVariant, 50)}
                         </div>
                         <span class="text-2xl font-black text-slate-800 tracking-wider leading-none">${info.display}</span>
                         <span class="text-slate-500 uppercase text-center w-full px-1" style="font-size: 9px; font-weight: 700;">${info.desc}</span>
@@ -790,13 +860,13 @@
                 const wrap = document.createElement('div');
                 
                 // Get Icon Variant
-                let iconVariant = pKey; // for blood
-                if(state.mode === 'pea') iconVariant = (pKey === trait.dominant); // true/false
+                let iconVariant = pKey; 
+                if(state.mode === 'pea') iconVariant = (pKey === trait.dominant); 
 
                 wrap.className = "flex items-center gap-3";
                 wrap.innerHTML = `
                     <div class="p-1 bg-slate-100 rounded">
-                        ${getIconSVG(state.mode === 'pea' ? trait.id : 'blood', iconVariant, 24)}
+                        ${getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), iconVariant, 24)}
                     </div>
                     <div class="flex-1">
                         <div class="flex justify-between text-sm font-medium">
