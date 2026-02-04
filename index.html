@@ -38,6 +38,7 @@
         .bg-white { background-color: #ffffff; }
         .text-xs { font-size: 0.75rem; line-height: 1rem; }
         .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-base { font-size: 1rem; line-height: 1.5rem; } /* Added for bigger buttons */
         .text-2xl { font-size: 1.5rem; line-height: 2rem; }
         .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
         .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
@@ -50,6 +51,8 @@
         .mb-5 { margin-bottom: 1.25rem; }
         .mb-6 { margin-bottom: 1.5rem; }
         .mr-4 { margin-right: 1rem; } 
+        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; } /* Added for bigger buttons */
         
         /* --- Colors --- */
         .text-indigo-700 { color: #4338ca; }
@@ -125,13 +128,14 @@
             <h1 class="text-3xl font-bold text-indigo-700 flex items-center gap-2">
                 Mr. Alayoubi's Genetics Lab
             </h1>
-            <span class="text-xs font-bold text-slate-400 uppercase" style="letter-spacing: 0.1em; margin-top: 0.25rem;">Version 2.5</span>
+            <span class="text-xs font-bold text-slate-400 uppercase" style="letter-spacing: 0.1em; margin-top: 0.25rem;">Version 3.1</span>
         </header>
 
         <!-- Mode Switcher -->
         <div class="flex justify-center mb-4 border-b border-slate-200" style="gap: 2px;">
             <div id="tabPea" class="mode-tab active" onclick="switchMode('pea')">🌱 Pea Plant Traits</div>
             <div id="tabSnap" class="mode-tab inactive" onclick="switchMode('snapdragon')">🌸 Incomplete Dominance</div>
+            <div id="tabSex" class="mode-tab inactive" onclick="switchMode('sexlinked')">🧬 Sex-Linked Traits</div>
             <div id="tabBlood" class="mode-tab inactive" onclick="switchMode('blood')">🩸 Blood Types</div>
         </div>
 
@@ -316,15 +320,24 @@
           { id: 'stemHeight', name: 'Stem Height', letter: 'T', dominant: 'Tall', recessive: 'Short', domColor: '#15803D', recColor: '#15803D' }
         ];
 
+        const SEX_LINKED_TRAITS = [
+            { id: 'colorBlindness', name: 'Color Blindness', letter: 'E', dominant: 'Normal Vision', recessive: 'Color Blind', domColor: '#10b981', recColor: '#6b7280' },
+            { id: 'baldness', name: 'Baldness', letter: 'B', dominant: 'Normal Hair', recessive: 'Baldness', domColor: '#8b5cf6', recColor: '#fca5a5' }
+        ];
+
         const PEA_PARENT_OPTS = [
             { value: 'dom', label: 'Homozygous Dominant' },
             { value: 'het', label: 'Heterozygous' },
             { value: 'rec', label: 'Homozygous Recessive' }
         ];
 
-        // Blood Types: A, B, O
-        // Alleles: A, B, O
-        // Genotypes: AA, AO, BB, BO, AB, OO
+        // For Sex-Linked Females: same options as pea (Hom Dom, Het, Hom Rec)
+        // For Sex-Linked Males: only Hemizygous Dom (Normal) or Hemizygous Rec (Affected)
+        const SEX_LINKED_MALE_OPTS = [
+            { value: 'dom', label: 'Unaffected' },
+            { value: 'rec', label: 'Affected' }
+        ];
+
         const BLOOD_DATA = {
             id: 'bloodType',
             name: 'ABO Blood Type',
@@ -340,9 +353,9 @@
 
         // --- STATE ---
         let state = {
-            mode: 'pea', // 'pea' | 'snapdragon' | 'blood'
-            traitId: 'seedShape', // For pea mode
-            p1Value: 'het', // Pea: 'dom'/'het'/'rec' | Blood: 'AO'
+            mode: 'pea', // 'pea' | 'snapdragon' | 'sexlinked' | 'blood'
+            traitId: 'seedShape', // For pea/sexlinked mode
+            p1Value: 'het', // Pea/Sex: 'dom'/'het'/'rec' | Blood: 'AO'
             p2Value: 'het',
             p1Sep: false,
             p2Sep: false,
@@ -380,6 +393,7 @@
             state.p1Sep = false; state.p2Sep = false; state.boxes = ['empty','empty','empty','empty'];
             document.getElementById('tabPea').className = `mode-tab ${newMode === 'pea' ? 'active' : 'inactive'}`;
             document.getElementById('tabSnap').className = `mode-tab ${newMode === 'snapdragon' ? 'active' : 'inactive'}`;
+            document.getElementById('tabSex').className = `mode-tab ${newMode === 'sexlinked' ? 'active' : 'inactive'}`;
             document.getElementById('tabBlood').className = `mode-tab ${newMode === 'blood' ? 'active' : 'inactive'}`;
             
             // Set defaults
@@ -391,6 +405,10 @@
                 state.traitId = 'snapColor';
                 state.p1Value = 'het'; // RW
                 state.p2Value = 'het'; // RW
+            } else if (newMode === 'sexlinked') {
+                state.traitId = 'colorBlindness';
+                state.p1Value = 'dom'; // Male usually Dom or Rec
+                state.p2Value = 'het'; // Female Carrier
             } else {
                 state.traitId = 'bloodType';
                 state.p1Value = 'AO';
@@ -402,15 +420,22 @@
 
         function renderTraitSelect() {
             elTraitSelect.innerHTML = '';
+            elTraitSelect.disabled = false;
+
             if (state.mode === 'pea') {
                 PEA_TRAITS.forEach(t => {
                     const opt = document.createElement('option');
-                    opt.value = t.id;
-                    opt.innerText = t.name;
+                    opt.value = t.id; opt.innerText = t.name;
                     if(t.id === state.traitId) opt.selected = true;
                     elTraitSelect.appendChild(opt);
                 });
-                elTraitSelect.disabled = false;
+            } else if (state.mode === 'sexlinked') {
+                SEX_LINKED_TRAITS.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id; opt.innerText = t.name;
+                    if(t.id === state.traitId) opt.selected = true;
+                    elTraitSelect.appendChild(opt);
+                });
             } else if (state.mode === 'snapdragon') {
                 const opt = document.createElement('option');
                 opt.innerText = "Snapdragon Flower Color";
@@ -426,12 +451,26 @@
 
         // --- HELPERS ---
         function getPeaTrait() { return PEA_TRAITS.find(t => t.id === state.traitId); }
+        function getSexLinkedTrait() { return SEX_LINKED_TRAITS.find(t => t.id === state.traitId); }
         
-        function getGenotypePair(type, letter) {
+        function getGenotypePair(type, letter, isMale = false) {
             if (state.mode === 'snapdragon') {
                 if(type === 'dom') return 'RR';
                 if(type === 'het') return 'RW';
                 if(type === 'rec') return 'WW';
+            }
+            if (state.mode === 'sexlinked') {
+                if (isMale) {
+                    // Male: X^E Y or X^e Y
+                    if(type === 'dom') return `X${letter}Y`;
+                    if(type === 'rec') return `X${letter.toLowerCase()}Y`;
+                    return `X${letter}Y`; // Fallback
+                } else {
+                    // Female: X^E X^E, X^E X^e, X^e X^e
+                    if(type === 'dom') return `X${letter}X${letter}`;
+                    if(type === 'het') return `X${letter}X${letter.toLowerCase()}`;
+                    if(type === 'rec') return `X${letter.toLowerCase()}X${letter.toLowerCase()}`;
+                }
             }
             // Pea
             if(type === 'dom') return letter + letter;
@@ -442,16 +481,20 @@
 
         // Display HTML for alleles
         function getAlleleDisplay(allele) {
+            // Sex Linked: X^E, Y
+            if (state.mode === 'sexlinked') {
+                if (allele === 'Y') return 'Y';
+                if (allele.startsWith('X')) {
+                    const letter = allele.substring(1);
+                    return `X<sup>${letter}</sup>`;
+                }
+            }
             return allele; 
         }
 
-        function getGenotypeInfo(typeValue, trait) {
+        function getGenotypeInfo(typeValue, trait, isMale = false) {
             if (state.mode === 'pea') {
-                let code = '';
-                if(typeValue === 'dom') code = trait.letter + trait.letter;
-                if(typeValue === 'het') code = trait.letter + trait.letter.toLowerCase();
-                if(typeValue === 'rec') code = trait.letter.toLowerCase() + trait.letter.toLowerCase();
-                
+                let code = getGenotypePair(typeValue, trait.letter);
                 let desc = '';
                 if(typeValue === 'dom') desc = 'Homozygous Dominant';
                 if(typeValue === 'het') desc = 'Heterozygous';
@@ -461,15 +504,15 @@
                     display: code, 
                     alleles: code.split(''), 
                     desc: desc,
-                    isDom: code.includes(trait.letter) // Phenotype check
+                    isDom: code.includes(trait.letter) 
                 };
             } else if (state.mode === 'snapdragon') {
-                let code = '';
+                let code = getGenotypePair(typeValue, '');
                 let desc = '';
                 let pheno = '';
-                if(typeValue === 'dom') { code = 'RR'; desc = 'Homozygous (Red)'; pheno = 'Red'; }
-                if(typeValue === 'het') { code = 'RW'; desc = 'Heterozygous (Pink)'; pheno = 'Pink'; }
-                if(typeValue === 'rec') { code = 'WW'; desc = 'Homozygous (White)'; pheno = 'White'; }
+                if(typeValue === 'dom') { desc = 'Homozygous (Red)'; pheno = 'Red'; }
+                if(typeValue === 'het') { desc = 'Heterozygous (Pink)'; pheno = 'Pink'; }
+                if(typeValue === 'rec') { desc = 'Homozygous (White)'; pheno = 'White'; }
                 
                 return {
                     display: code,
@@ -477,10 +520,56 @@
                     desc: desc,
                     phenotype: pheno // For icon
                 };
+            } else if (state.mode === 'sexlinked') {
+                // Determine Raw String (e.g. XE Y)
+                let raw = getGenotypePair(typeValue, trait.letter, isMale);
+                // Split alleles. XA Y -> [XA, Y]. XA Xa -> [XA, Xa]
+                // Simple regex split for X+letter or Y
+                let alleles = [];
+                if (isMale) {
+                    alleles = [raw.substring(0,2), 'Y'];
+                } else {
+                    alleles = [raw.substring(0,2), raw.substring(2,4)];
+                }
+                
+                let display = getAlleleDisplay(alleles[0]) + getAlleleDisplay(alleles[1]);
+                let desc = '';
+                let pheno = '';
+                let isAffected = false;
+
+                if (isMale) {
+                    // Male Logic
+                    // raw[1] is the letter of the allele (e.g. E or e)
+                    const alleleLetter = raw[1]; 
+                    if (alleleLetter === trait.letter) {
+                        desc = 'Hemizygous Dominant';
+                        pheno = trait.dominant;
+                    } else {
+                        desc = 'Hemizygous Recessive';
+                        pheno = trait.recessive;
+                        isAffected = true;
+                    }
+                } else {
+                    // Female Logic
+                    if (typeValue === 'dom') { desc = 'Homozygous Dominant'; pheno = trait.dominant; }
+                    if (typeValue === 'het') { desc = 'Heterozygous (Carrier)'; pheno = trait.dominant; } // Carrier is normal pheno
+                    if (typeValue === 'rec') { desc = 'Homozygous Recessive'; pheno = trait.recessive; isAffected = true; }
+                }
+
+                return {
+                    display: display,
+                    alleles: alleles,
+                    desc: desc,
+                    phenotype: pheno,
+                    isDom: !isAffected // Reuse for icon logic (Normal vs Affected)
+                };
+
             } else {
                 // Blood
                 const geno = BLOOD_DATA.genotypes.find(g => g.id === typeValue);
-                const display = getAlleleDisplay(geno.alleles[0]) + getAlleleDisplay(geno.alleles[1]);
+                // Simplified Display for 2.3: just letter
+                // But wait, user asked to remove I^A. So alleles are just A, B, O.
+                const display = geno.alleles.join('');
                 return {
                     display: display,
                     alleles: geno.alleles,
@@ -492,7 +581,7 @@
 
         function getOffspringInfo(g1, g2, trait) {
             if (state.mode === 'pea') {
-                let final = (g1 < g2) ? g1 + g2 : g2 + g1; // Tt vs tT
+                let final = (g1 < g2) ? g1 + g2 : g2 + g1; 
                 const l1 = g1; const l2 = g2;
                 if (l1 === l1.toLowerCase() && l2 === l2.toUpperCase()) final = l2 + l1;
                 
@@ -503,11 +592,10 @@
                     display: final,
                     desc: desc,
                     phenotype: final.includes(trait.letter) ? trait.dominant : trait.recessive,
-                    isDom: final.includes(trait.letter), // For Icon generation
-                    rawGeno: final // For counting
+                    isDom: final.includes(trait.letter),
+                    rawGeno: final
                 };
             } else if (state.mode === 'snapdragon') {
-                // R and W
                 const alleles = [g1, g2].sort();
                 const display = alleles.join('');
                 let desc = '';
@@ -515,41 +603,76 @@
                 if(display === 'RR') { desc = 'Homozygous'; pheno = 'Red'; }
                 else if(display === 'WW') { desc = 'Homozygous'; pheno = 'White'; }
                 else { desc = 'Heterozygous'; pheno = 'Pink'; }
-                return {
-                    display: display,
-                    desc: desc,
-                    phenotype: pheno,
-                    rawGeno: display
-                };
-            } else {
-                // Blood Logic
-                // Sort: A, B, O
-                const order = { 'A': 1, 'B': 2, 'O': 3 };
-                const alleles = [g1, g2].sort((a,b) => order[a] - order[b]);
+                return { display: display, desc: desc, phenotype: pheno, rawGeno: display };
+            } else if (state.mode === 'sexlinked') {
+                // g1/g2 are like XE, Xe, or Y
+                // Sort X before Y.
+                let alleles = [g1, g2];
+                if (g1 === 'Y') alleles = [g2, g1]; // X first
+                else if (g2 === 'Y') alleles = [g1, g2]; // X first
+                else alleles.sort(); // XX case: sort XE Xe
+
                 const a1 = alleles[0];
                 const a2 = alleles[1];
-                const display = a1 + a2; // e.g., AA, AO, AB
+                const display = getAlleleDisplay(a1) + getAlleleDisplay(a2);
                 
-                // Determine Phenotype
-                let pheno = 'Type O';
-                if (a1 === 'A' && a2 === 'A') pheno = 'Type A';
-                if (a1 === 'A' && a2 === 'O') pheno = 'Type A';
-                if (a1 === 'B' && a2 === 'B') pheno = 'Type B';
-                if (a1 === 'B' && a2 === 'O') pheno = 'Type B';
-                if (a1 === 'A' && a2 === 'B') pheno = 'Type AB';
-                
-                // Determine Desc (Homo/Hetero)
+                let isMale = (a2 === 'Y');
+                let pheno = '';
                 let desc = '';
-                if(a1 === a2) desc = (a1 === 'O') ? 'Homozygous Recessive' : 'Homozygous Dominant';
-                else if (a1 === 'A' && a2 === 'B') desc = 'Co-dominant';
-                else desc = 'Heterozygous';
+                let isAffected = false;
+
+                if (isMale) {
+                    // Male Offspring
+                    const letter = a1[1]; // X[E]
+                    if (letter === trait.letter) {
+                        pheno = `Normal Male`;
+                        desc = 'Hemizygous Dominant';
+                    } else {
+                        pheno = `Affected Male`;
+                        desc = 'Hemizygous Recessive';
+                        isAffected = true;
+                    }
+                } else {
+                    // Female Offspring
+                    const l1 = a1[1]; const l2 = a2[1];
+                    if (l1 === trait.letter && l2 === trait.letter) {
+                        pheno = `Normal Female`;
+                        desc = 'Homozygous Dominant';
+                    } else if (l1 !== l2) {
+                        pheno = `Carrier Female`; // Phenotypically normal
+                        desc = 'Heterozygous';
+                    } else {
+                        pheno = `Affected Female`;
+                        desc = 'Homozygous Recessive';
+                        isAffected = true;
+                    }
+                }
 
                 return {
                     display: display,
                     desc: desc,
                     phenotype: pheno,
-                    rawGeno: display // internal key
+                    isDom: !isAffected,
+                    rawGeno: a1 + a2
                 };
+
+            } else {
+                // Blood Logic
+                const order = { 'A': 1, 'B': 2, 'O': 3 };
+                const alleles = [g1, g2].sort((a,b) => order[a] - order[b]);
+                const display = alleles.join('');
+                
+                let pheno = 'Type O';
+                if (display === 'AA' || display === 'AO') pheno = 'Type A';
+                if (display === 'BB' || display === 'BO') pheno = 'Type B';
+                if (display === 'AB') pheno = 'Type AB';
+                
+                let desc = '';
+                if(alleles[0] === alleles[1]) desc = (alleles[0] === 'O') ? 'Homozygous Recessive' : 'Homozygous Dominant';
+                else if (display === 'AB') desc = 'Co-dominant';
+                else desc = 'Heterozygous';
+
+                return { display: display, desc: desc, phenotype: pheno, rawGeno: display };
             }
         }
 
@@ -559,63 +682,73 @@
 
         // --- SVG GENERATOR ---
         function getIconSVG(traitId, variant, size=64) {
-            // Variant: for Pea it's boolean (isDom), for Blood/Snap it's string phenotype
             const svgStart = `<svg width="${size}" height="${size}" viewBox="0 0 100 100">`;
             const svgEnd = `</svg>`;
+            const stroke = '#374151';
             
             if (state.mode === 'pea') {
                 const t = PEA_TRAITS.find(x => x.id === traitId);
-                const color = variant ? t.domColor : t.recColor; // variant is isDom
-                const stroke = '#374151';
-                
+                const color = variant ? t.domColor : t.recColor;
                 let content = '';
-                // Simple shapes for peas (reusing logic)
-                if (traitId === 'seedShape') content = variant ? `<circle cx="50" cy="50" r="40" fill="${color}" stroke="${stroke}" stroke-width="3" />` : `<path d="M50 10 C 60 10 70 15 80 20 C 90 30, 90 50, 85 65 C 80 80, 60 90, 50 90 C 40 90, 20 80, 15 65 C 10 50, 10 30, 20 20 C 30 15, 40 10, 50 10 Z" fill="${color}" stroke="${stroke}" stroke-width="3" /><path d="M30 30 Q 50 50 70 30" fill="none" stroke="${stroke}" stroke-width="2" opacity="0.5" /><path d="M30 70 Q 50 50 70 70" fill="none" stroke="${stroke}" stroke-width="2" opacity="0.5" />`;
+                if (traitId === 'seedShape') content = variant ? `<circle cx="50" cy="50" r="40" fill="${color}" stroke="${stroke}" stroke-width="3" />` : `<path d="M50 10 C 60 10 70 15 80 20 C 90 30, 90 50, 85 65 C 80 80, 60 90, 50 90 C 40 90, 20 80, 15 65 C 10 50, 10 30, 20 20 C 30 15, 40 10, 50 10 Z" fill="${color}" stroke="${stroke}" stroke-width="3" />`;
                 else if (traitId === 'seedColor') content = `<circle cx="50" cy="50" r="40" fill="${color}" stroke="${stroke}" stroke-width="3" />`;
                 else if (traitId === 'flowerColor') content = `<path d="M50 50 L30 20 Q50 0 70 20 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L80 30 Q100 50 80 70 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L70 80 Q50 100 30 80 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L20 70 Q0 50 20 30 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><circle cx="50" cy="50" r="10" fill="#FDE047" />`;
-                else content = `<circle cx="50" cy="50" r="40" fill="${color}" stroke="${stroke}" stroke-width="3" />`; // Fallback
-                
+                else content = `<circle cx="50" cy="50" r="40" fill="${color}" stroke="${stroke}" stroke-width="3" />`;
                 return svgStart + content + svgEnd;
             } else if (state.mode === 'snapdragon') {
-                // variant is 'Red', 'Pink', 'White'
-                let color = '#ef4444'; // Red default
+                let color = '#ef4444';
                 if(variant === 'Pink') color = '#f472b6';
                 if(variant === 'White') color = '#f8fafc';
-                const stroke = '#374151';
-                
-                // Flower Shape
                 let content = `<path d="M50 50 L30 20 Q50 0 70 20 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L80 30 Q100 50 80 70 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L70 80 Q50 100 30 80 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><path d="M50 50 L20 70 Q0 50 20 30 Z" fill="${color}" stroke="${stroke}" stroke-width="2" /><circle cx="50" cy="50" r="10" fill="#FDE047" />`;
                 return svgStart + content + svgEnd;
+            } else if (state.mode === 'sexlinked') {
+                if (traitId === 'colorBlindness') {
+                    const irisColor = variant ? '#10b981' : '#6b7280'; 
+                    const pupil = variant ? 'black' : '#ef4444';
+                    let eye = `<path d="M10 50 Q 50 20 90 50 Q 50 80 10 50 Z" fill="white" stroke="${stroke}" stroke-width="3" />`;
+                    eye += `<circle cx="50" cy="50" r="20" fill="${irisColor}" />`;
+                    eye += `<circle cx="50" cy="50" r="8" fill="${pupil}" />`;
+                    if (!variant) eye += `<line x1="20" y1="20" x2="80" y2="80" stroke="#ef4444" stroke-width="4" opacity="0.7" />`;
+                    return svgStart + eye + svgEnd;
+                } else {
+                    let head = `<circle cx="50" cy="50" r="35" fill="#fde047" stroke="${stroke}" stroke-width="3" />`; 
+                    if (variant) {
+                        head += `<path d="M15 50 Q 15 10 50 10 Q 85 10 85 50" fill="none" stroke="#8b5cf6" stroke-width="8" />`;
+                    } else {
+                        head += `<path d="M30 30 Q 35 25 40 30" fill="none" stroke="#d97706" stroke-width="2" />`;
+                    }
+                    head += `<circle cx="35" cy="45" r="3" fill="black"/><circle cx="65" cy="45" r="3" fill="black"/>`;
+                    head += `<path d="M35 65 Q 50 75 65 65" fill="none" stroke="black" stroke-width="2" />`;
+                    return svgStart + head + svgEnd;
+                }
+
             } else {
-                // Blood Mode
-                const pheno = variant; // 'Type A', 'Type B', 'Type AB', 'Type O'
-                const color = '#ef4444'; // Blood Red
+                // Blood
+                const pheno = variant;
+                const color = '#ef4444';
                 const stroke = '#991b1b';
                 let content = `<circle cx="50" cy="50" r="35" fill="${color}" stroke="${stroke}" stroke-width="3" />`;
-                
-                // Add Antigens
-                if (pheno === 'Type A' || pheno === 'Type AB') {
-                    // Spikes
-                    content += `<path d="M50 15 L45 5 L55 5 Z" fill="#3b82f6" /> <path d="M85 50 L95 45 L95 55 Z" fill="#3b82f6" /> <path d="M15 50 L5 45 L5 55 Z" fill="#3b82f6" /> <path d="M50 85 L45 95 L55 95 Z" fill="#3b82f6" />`;
-                    // Diagonals
-                    content += `<path d="M75 25 L82 18 L88 24 Z" fill="#3b82f6" /> <path d="M25 75 L18 82 L24 88 Z" fill="#3b82f6" />`;
-                }
-                if (pheno === 'Type B' || pheno === 'Type AB') {
-                    // Bumps (Yellow Circles)
-                    content += `<circle cx="25" cy="25" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="75" cy="75" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="75" cy="25" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="25" cy="75" r="5" fill="#facc15" stroke="black" stroke-width="1"/>`;
-                    if (pheno === 'Type B') { // Add cardinals for pure B
-                         content += `<circle cx="50" cy="10" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="90" cy="50" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="50" cy="90" r="5" fill="#facc15" stroke="black" stroke-width="1"/> <circle cx="10" cy="50" r="5" fill="#facc15" stroke="black" stroke-width="1"/>`;
-                    }
-                }
+                if (pheno === 'Type A' || pheno === 'Type AB') content += `<path d="M50 15 L45 5 L55 5 Z" fill="#3b82f6" /><path d="M85 50 L95 45 L95 55 Z" fill="#3b82f6" /><path d="M15 50 L5 45 L5 55 Z" fill="#3b82f6" /><path d="M50 85 L45 95 L55 95 Z" fill="#3b82f6" />`;
+                if (pheno === 'Type B' || pheno === 'Type AB') content += `<circle cx="25" cy="25" r="5" fill="#facc15" stroke="black" stroke-width="1"/><circle cx="75" cy="75" r="5" fill="#facc15" stroke="black" stroke-width="1"/><circle cx="75" cy="25" r="5" fill="#facc15" stroke="black" stroke-width="1"/><circle cx="25" cy="75" r="5" fill="#facc15" stroke="black" stroke-width="1"/>`;
                 return svgStart + content + svgEnd;
             }
         }
 
         // --- RENDER ---
         function render() {
-            const trait = state.mode === 'pea' ? getPeaTrait() : null;
-            const p1Info = getGenotypeInfo(state.p1Value, trait);
-            const p2Info = getGenotypeInfo(state.p2Value, trait);
+            let trait;
+            if (state.mode === 'pea') trait = getPeaTrait();
+            else if (state.mode === 'sexlinked') trait = getSexLinkedTrait();
+            else trait = null; // Snap/Blood
+
+            let p1Info, p2Info;
+            if (state.mode === 'sexlinked') {
+                p1Info = getGenotypeInfo(state.p1Value, trait, true); // Male
+                p2Info = getGenotypeInfo(state.p2Value, trait, false); // Female
+            } else {
+                p1Info = getGenotypeInfo(state.p1Value, trait);
+                p2Info = getGenotypeInfo(state.p2Value, trait);
+            }
             
             // 1. Legend
             if (state.mode === 'pea') {
@@ -637,6 +770,12 @@
                             <span>${getIconSVG('snapColor', 'White', 20)} WW</span>
                         </div>
                     </div>`;
+            } else if (state.mode === 'sexlinked') {
+                document.getElementById('traitLegend').innerHTML = `
+                    <div class="flex flex-col gap-2 text-xs font-bold" style="color: #3730a3;">
+                       <div class="flex items-center gap-2"><div>${getIconSVG(trait.id, true, 24)}</div> Normal (${trait.letter})</div>
+                       <div class="flex items-center gap-2"><div>${getIconSVG(trait.id, false, 24)}</div> Affected (${trait.letter.toLowerCase()})</div>
+                    </div>`;
             } else {
                 document.getElementById('traitLegend').innerHTML = `
                     <div class="grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-600">
@@ -649,31 +788,31 @@
             }
 
             // 2. Parent Controls
-            // Icon
             let p1VisualVariant, p2VisualVariant;
-            if(state.mode === 'pea') {
+            if(state.mode === 'pea' || state.mode === 'sexlinked') {
                 p1VisualVariant = p1Info.isDom; p2VisualVariant = p2Info.isDom;
             } else {
                 p1VisualVariant = p1Info.phenotype; p2VisualVariant = p2Info.phenotype;
             }
             
-            document.getElementById('p1IconSmall').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), p1VisualVariant, 24);
+            const traitIdForIcon = (state.mode === 'pea' || state.mode === 'sexlinked') ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood');
+
+            document.getElementById('p1IconSmall').innerHTML = getIconSVG(traitIdForIcon, p1VisualVariant, 24);
             document.getElementById('p1GenoDisplay').innerHTML = p1Info.display;
             document.getElementById('p1SetParentLabel').innerText = p1Info.desc;
 
-            document.getElementById('p2IconSmall').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), p2VisualVariant, 24);
+            document.getElementById('p2IconSmall').innerHTML = getIconSVG(traitIdForIcon, p2VisualVariant, 24);
             document.getElementById('p2GenoDisplay').innerHTML = p2Info.display;
             document.getElementById('p2SetParentLabel').innerText = p2Info.desc;
 
             // Buttons
-            renderParentButtons(elP1Buttons, 'p1Value');
-            renderParentButtons(elP2Buttons, 'p2Value');
+            renderParentButtons(elP1Buttons, 'p1Value', true); // isMale = true
+            renderParentButtons(elP2Buttons, 'p2Value', false);
 
             // 3. Simulator Visuals
-            // P1
             document.getElementById('p1Controls').style.opacity = state.p1Sep ? '0' : '1';
             document.getElementById('p1Controls').style.pointerEvents = state.p1Sep ? 'none' : 'auto';
-            document.getElementById('p1BigIcon').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), p1VisualVariant, 48);
+            document.getElementById('p1BigIcon').innerHTML = getIconSVG(traitIdForIcon, p1VisualVariant, 48);
             document.getElementById('p1GenoDesc').innerText = p1Info.desc;
             
             document.getElementById('p1g1Text').innerHTML = getAlleleDisplay(p1Info.alleles[0]);
@@ -688,7 +827,7 @@
             document.getElementById('p2Controls').style.opacity = state.p2Sep ? '0' : '1';
             document.getElementById('p2SeparateBtnContainer').style.opacity = state.p2Sep ? '0' : '1';
             document.getElementById('p2SeparateBtnContainer').style.pointerEvents = state.p2Sep ? 'none' : 'auto';
-            document.getElementById('p2BigIcon').innerHTML = getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), p2VisualVariant, 48);
+            document.getElementById('p2BigIcon').innerHTML = getIconSVG(traitIdForIcon, p2VisualVariant, 48);
             document.getElementById('p2GenoDesc').innerText = p2Info.desc;
 
             document.getElementById('p2g1Text').innerHTML = getAlleleDisplay(p2Info.alleles[0]);
@@ -704,31 +843,55 @@
             renderStats(p1Info.alleles, p2Info.alleles, trait);
         }
 
-        function renderParentButtons(container, stateKey) {
+        function renderParentButtons(container, stateKey, isMale) {
             container.innerHTML = '';
             
-            if (state.mode === 'pea' || state.mode === 'snapdragon') {
-                const trait = state.mode === 'pea' ? getPeaTrait() : { letter: 'R' }; // Dummy for snap
-                container.className = "flex gap-1";
-                PEA_PARENT_OPTS.forEach(opt => {
-                    const btn = document.createElement('button');
-                    const code = getGenotypePair(opt.value, trait.letter);
-                    const isSelected = state[stateKey] === opt.value;
-                    btn.className = `flex-1 py-2 rounded-lg font-bold text-xs ${isSelected ? (stateKey==='p1Value'?'btn-selected-indigo':'btn-selected-pink') : 'bg-slate-100 text-slate-500 border border-transparent'}`;
-                    btn.innerHTML = code;
-                    btn.onclick = () => { state[stateKey] = opt.value; resetSim(); render(); };
-                    container.appendChild(btn);
-                });
-            } else {
+            let options = PEA_PARENT_OPTS;
+            if (state.mode === 'sexlinked' && isMale) options = SEX_LINKED_MALE_OPTS;
+            else if (state.mode === 'blood') options = BLOOD_DATA.genotypes;
+            
+            if (state.mode === 'blood') {
                 container.className = "grid grid-cols-3 gap-1";
-                BLOOD_DATA.genotypes.forEach(g => {
+                options.forEach(g => {
                     const btn = document.createElement('button');
                     const isSelected = state[stateKey] === g.id;
                     btn.className = `py-2 rounded-lg font-bold text-[10px] ${isSelected ? (stateKey==='p1Value'?'btn-selected-indigo':'btn-selected-pink') : 'bg-slate-100 text-slate-500 border border-transparent'}`;
-                    const d1 = getAlleleDisplay(g.alleles[0]);
-                    const d2 = getAlleleDisplay(g.alleles[1]);
-                    btn.innerHTML = d1 + d2;
+                    btn.innerHTML = g.alleles.join('');
                     btn.onclick = () => { state[stateKey] = g.id; resetSim(); render(); };
+                    container.appendChild(btn);
+                });
+            } else {
+                container.className = "flex gap-1";
+                const trait = (state.mode === 'pea' || state.mode === 'sexlinked') ? (state.mode === 'pea' ? getPeaTrait() : getSexLinkedTrait()) : { letter: 'R' };
+                
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    const code = getGenotypePair(opt.value, trait.letter, isMale);
+                    const isSelected = state[stateKey] === opt.value;
+                    
+                    let sizeClasses = "text-xs";
+                    if (state.mode === 'sexlinked') {
+                         sizeClasses = "text-sm py-3";
+                    }
+
+                    btn.className = `flex-1 ${sizeClasses} rounded-lg font-bold ${isSelected ? (stateKey==='p1Value'?'btn-selected-indigo':'btn-selected-pink') : 'bg-slate-100 text-slate-500 border border-transparent'}`;
+                    
+                    // Display fix for sex linked to handle superscripts
+                    if (state.mode === 'sexlinked') {
+                        let htmlCode = '';
+                        for(let i=0; i<code.length; i++) {
+                            htmlCode += code[i];
+                            if(code[i] === 'X' && i+1 < code.length && code[i+1] !== 'X' && code[i+1] !== 'Y') {
+                                htmlCode += `<sup>${code[i+1]}</sup>`;
+                                i++;
+                            }
+                        }
+                        btn.innerHTML = htmlCode;
+                    } else {
+                        btn.innerHTML = code;
+                    }
+                    
+                    btn.onclick = () => { state[stateKey] = opt.value; resetSim(); render(); };
                     container.appendChild(btn);
                 });
             }
@@ -775,14 +938,16 @@
                     }, 50);
                 } else if (boxState === 'filled') {
                     let iconVariant;
-                    if(state.mode === 'pea') iconVariant = info.isDom;
+                    if(state.mode === 'pea' || state.mode === 'sexlinked') iconVariant = info.isDom;
                     else iconVariant = info.phenotype; // Blood or Snap
                     
+                    const traitIdForIcon = (state.mode === 'pea' || state.mode === 'sexlinked') ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood');
+
                     const content = document.createElement('div');
                     content.className = "flex flex-col items-center justify-center w-full h-full fade-in final-glow pt-2";
                     content.innerHTML = `
                         <div class="mb-1" style="transform: scale(0.75);">
-                            ${getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), iconVariant, 50)}
+                            ${getIconSVG(traitIdForIcon, iconVariant, 50)}
                         </div>
                         <span class="text-2xl font-black text-slate-800 tracking-wider leading-none">${info.display}</span>
                         <span class="text-slate-500 uppercase text-center w-full px-1" style="font-size: 9px; font-weight: 700;">${info.desc}</span>
@@ -861,12 +1026,18 @@
                 
                 // Get Icon Variant
                 let iconVariant = pKey; 
-                if(state.mode === 'pea') iconVariant = (pKey === trait.dominant); 
+                if(state.mode === 'pea' || state.mode === 'sexlinked') {
+                    // Logic for variant
+                    if(state.mode === 'pea') iconVariant = (pKey === trait.dominant);
+                    if(state.mode === 'sexlinked') iconVariant = !pKey.includes('Affected') && !pKey.includes('Bald') && !pKey.includes('Color Blind');
+                }
+
+                const traitIdForIcon = (state.mode === 'pea' || state.mode === 'sexlinked') ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood');
 
                 wrap.className = "flex items-center gap-3";
                 wrap.innerHTML = `
                     <div class="p-1 bg-slate-100 rounded">
-                        ${getIconSVG(state.mode === 'pea' ? trait.id : (state.mode === 'snapdragon' ? 'snapColor' : 'blood'), iconVariant, 24)}
+                        ${getIconSVG(traitIdForIcon, iconVariant, 24)}
                     </div>
                     <div class="flex-1">
                         <div class="flex justify-between text-sm font-medium">
